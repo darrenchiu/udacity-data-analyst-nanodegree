@@ -1,0 +1,5 @@
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind_from_stats.html#scipy.stats.ttest_ind_from_stats
+https://docs.python.org/2/library/collections.html
+http://blog.minitab.com/blog/adventures-in-statistics-2/how-to-correctly-interpret-p-values
+http://www.dmstat1.com/res/TheCorrelationCoefficientDefined.html
+https://www.kaggle.com/c/titanic/data
