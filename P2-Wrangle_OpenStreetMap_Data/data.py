@@ -10,7 +10,7 @@ root = tree.getroot()
 
 # helper function to write an object to output json file
 def append_record(record):
-    with open('hong-kong_china_cleaned.json', 'a') as f:
+    with open('hong-kong_china.json', 'a') as f:
         f.write(json.dumps(record, ensure_ascii=False))
         f.write(os.linesep)
 
