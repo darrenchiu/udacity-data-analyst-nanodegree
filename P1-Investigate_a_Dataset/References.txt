@@ -3,3 +3,4 @@ https://docs.python.org/2/library/collections.html
 http://blog.minitab.com/blog/adventures-in-statistics-2/how-to-correctly-interpret-p-values
 http://www.dmstat1.com/res/TheCorrelationCoefficientDefined.html
 https://www.kaggle.com/c/titanic/data
+https://en.wikipedia.org/wiki/Passengers_of_the_RMS_Titanic
