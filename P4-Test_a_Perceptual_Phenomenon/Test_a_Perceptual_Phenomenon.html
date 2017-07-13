@@ -11789,7 +11789,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="1.-What-is-our-independent-variable?-What-is-our-dependent-variable?">1. What is our independent variable? What is our dependent variable?<a class="anchor-link" href="#1.-What-is-our-independent-variable?-What-is-our-dependent-variable?">&#182;</a></h4><p>Independent Variable: Words presented to participants</p>
+<h4 id="1.-What-is-our-independent-variable?-What-is-our-dependent-variable?">1. What is our independent variable? What is our dependent variable?<a class="anchor-link" href="#1.-What-is-our-independent-variable?-What-is-our-dependent-variable?">&#182;</a></h4><p>Independent Variable: Word color congruency condition</p>
 <p>Dependent Variable: Response time</p>
 
 </div>
@@ -11802,8 +11802,10 @@ div#notebook {
 <div class="text_cell_render border-box-sizing rendered_html">
 <h4 id="2.-What-is-an-appropriate-set-of-hypotheses-for-this-task?-What-kind-of-statistical-test-do-you-expect-to-perform?-Justify-your-choices.">2. What is an appropriate set of hypotheses for this task? What kind of statistical test do you expect to perform? Justify your choices.<a class="anchor-link" href="#2.-What-is-an-appropriate-set-of-hypotheses-for-this-task?-What-kind-of-statistical-test-do-you-expect-to-perform?-Justify-your-choices.">&#182;</a></h4><p>Now it’s your chance to try out the Stroop task for yourself. Go to this <a href="https://www.google.com/url?q=https://faculty.washington.edu/chudler/java/ready.html&amp;sa=D&amp;ust=1499924829511000&amp;usg=AFQjCNF_whwGBO8QBJuM73fnbRKk-Yct5Q">link</a>, which has a Java-based applet for performing the Stroop task. Record the times that you received on the task (you do not need to submit your times to the site.) Now, download this <a href="https://www.google.com/url?q=https://drive.google.com/file/d/0B9Yf01UaIbUgQXpYb2NhZ29yX1U/view?usp%3Dsharing&amp;sa=D&amp;ust=1499924829511000&amp;usg=AFQjCNHdSvx40SSDWtldPsYlOKE6ctzubA">dataset</a> which contains results from a number of participants in the task. Each row of the dataset contains the performance for one participant, with the first number their results on the congruent task and the second number their performance on the incongruent task.</p>
 <p>Hypotheses:</p>
-<p>H0: Incongruent words condition does not impact response time</p>
-<p>H1: Incongruent words condition impact response time</p>
+<p>Let μC denoting the mean response time in congruent condition,
+μI denoting the mean response time in incongruent condition.</p>
+<p>H0: Incongruent words condition does not impact response time (μC = μI)</p>
+<p>H1: Incongruent words condition impact response time (μC ≠ μI)</p>
 <p>Paired t-test is the suitable statistical test to perform on this dataset. This is because each participants have gone throught both conditions and the results could be paired up for comparison.</p>
 <p>One point to note is that, if the participants in congruent and incongruent conditions are different, we will then need to perform 2 samples t-test instead. Paired t-test is only applicable for same participants group and in the case that we are able to pair up their results in both conditions.</p>
 
@@ -12052,7 +12054,7 @@ dtype: float64</pre>
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>&lt;matplotlib.legend.Legend at 0x106665310&gt;</pre>
+<pre>&lt;matplotlib.legend.Legend at 0x105192310&gt;</pre>
 </div>
 
 </div>
