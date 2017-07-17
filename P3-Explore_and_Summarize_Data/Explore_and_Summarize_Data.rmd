@@ -25,6 +25,8 @@ a margin line to help you keep track of this guideline!
 
 library(ggplot2)
 library(reshape2)
+library(corrplot)
+library(gridExtra)
 ```
 
 ```{r echo=FALSE, Load_the_Data}
@@ -51,16 +53,21 @@ str(redWineData)
 head(redWineData)
 ```
 
-Before we do any analysis, we would like to take a look on the data to see if there are any data with a missing values or infinite values that we need to take care in analysis process.
+Before we do any analysis, we would like to take a look on the data to see if
+there are any data with a missing values or infinite values that we need to
+take care in analysis process.
 
 ```{r echo=FALSE}
 apply(redWineData, 2, function(x) any(is.na(x)))
 apply(redWineData, 2, function(x) any(is.infinite(x)))
 ```
 
-Luckily, there are no records that we need to take special care of missing fields or inifinte values.
+Luckily, there are no records that we need to take special care of missing
+fields or inifinte values.
 
-Our data consist of 1599 observations, with 13 variables. As we want to ultimately find out the relationship between quality and other variable, let's take a look at the quality distribution first.
+Our data consist of 1599 observations, with 13 variables. As we want to
+ultimately find out the relationship between quality and other variable, let's
+take a look at the quality distribution first.
 
 ```{r echo=FALSE}
 ggplot(aes(x = quality), data = redWineData) +
@@ -68,31 +75,46 @@ ggplot(aes(x = quality), data = redWineData) +
   scale_x_continuous(breaks = 0:10)
 ```
 
-As total.sulfur.dioxide is sum of free and bound sulfur dioxide, I would like to add a field of bound forms of SO2 to see if there are any use in the upcoming analysis.
+As total.sulfur.dioxide is sum of free and bound sulfur dioxide, I would like to
+add a field of bound forms of SO2 to see if there are any use in the upcoming
+analysis.
 
 ```{r echo=FALSE}
-redWineData['bound.sulfur.dioxide'] = redWineData['total.sulfur.dioxide'] - redWineData['free.sulfur.dioxide']
+redWineData['bound.sulfur.dioxide'] = redWineData['total.sulfur.dioxide'] -
+  redWineData['free.sulfur.dioxide']
 ```
 
-Also, we will plot a histogram for all the variables to see, trying to pinpoint some interesting fields that we should take a closer look.sum(is.na(z$Ozone))
+Also, we will plot a histogram for all the variables to see, trying to pinpoint
+some interesting fields that we should take a closer look.sum(is.na(z$Ozone))
 
 ```{r echo=FALSE}
 ggplot(data = melt(redWineData), mapping = aes(x = value)) + 
     geom_histogram(bins = 10) + facet_wrap(~variable, scales = 'free_x')
 ```
 
-from the histogram that we plotted, we can see that there are a number of fields either having rather evenly distributed values across the range or not much variation in values at all. To confirm the latter, we will calculate the standard deviation of each of the columns.
+from the histogram that we plotted, we can see that there are a number of fields
+either having rather evenly distributed values across the range or not much
+variation in values at all. To confirm the latter, we will calculate the
+standard deviation of each of the columns.
 
 ```{r echo=FALSE}
 apply(redWineData, 2, sd)
 ```
 
-As we can see, density, chlorides are having a very small variation, so we will just ignore them in the upcoming analysis, suspecting that they are not contributing much to the quality. The actual correlation of this will leave to bivariate analysis.
+As we can see, density, chlorides are having a very small variation, so we will
+just ignore them in the upcoming analysis, suspecting that they are not
+contributing much to the quality. The actual correlation of this will leave to
+bivariate analysis.
 
-Before we move on to the bivariate analysis, we would also like to take a look at the few observations with highest quality (quality>=7).
+As we would like to understand more about the distribution of chlorides and
+density, so we will plot them individually here.
 
 ```{r echo=FALSE}
-subset(redWineData, quality > 7)
+ggplot(aes(x = chlorides), data = redWineData) +
+  geom_histogram(binwidth = 0.01)
+
+ggplot(aes(x = density), data = redWineData) +
+  geom_histogram(binwidth = 0.001)
 ```
 
 
@@ -109,17 +131,49 @@ reflect on and summarize what you've found. Use the questions below to help you
 gather your observations and add your own if you have other thoughts!
 
 ### What is the structure of your dataset?
+There are 1,599 red wine records in the dataset with 11 features(fixed.acidity,
+volatile.acidity, citric.acid, residual.sugar, chlorides, free.sulfur.dioxide,
+total.sulfur.dioxide, density, pH, sulphates, alcohol) and 1 output variable
+(quality). 
+
+All of the features are numbers, while quality are integers.
+
+Other observations:
+1. quality ranges from 3-8, without extreme value from 0-2 or 9-10.
+2. quality is following a normal distribution
+3. 75% of observations are having a chlorides level < 0.09, and surprisingly
+there are samples with almost 7 times of this value
 
 ### What is/are the main feature(s) of interest in your dataset?
+Based on the description from the dataset and some research, I think volatile
+acidity, citric acid, residual sugar, free sulfur dioxide would be the main
+features to predict quality.
 
 ### What other features in the dataset do you think will help support your \
 investigation into your feature(s) of interest?
+There are some other features that I suspect that fixed acidity/pH are highly
+related or even representing very similar trends. As there are impacting the
+taste, I would suspect that there will contribute partly to the quality score.
+
+Also sulphates and the three SO2 fields should be correlated. We will perform
+correlation analysis in the next part to confirm these relationships.
+
 
 ### Did you create any new variables from existing variables in the dataset?
+I also created a new field for bound form of sulfur dioxide, which is
+(total.sulfur.dioxide - free.sulfur.dioxide). While we don't know if bounded
+form of SO2 would be of interest or correlation with the quality, we could do
+some correlation analysis in the next section.
 
 ### Of the features you investigated, were there any unusual distributions? \
 Did you perform any operations on the data to tidy, adjust, or change the form \
 of the data? If so, why did you do this?
+
+Luckily, there are no missing values or infinite values in our dataset. At these
+point, I don't identify any features that need to be scale or transformed.
+However, I do found that density and chloride field is having very small
+variation, which I would exclude them from further analysis as I doubt if that
+small variation are contributing to the difference in taste.
 
 
 # Bivariate Plots Section
@@ -130,10 +184,115 @@ yourself to relationships between a main output feature and one of the
 supporting variables. Try to look at relationships between supporting variables
 as well.
 
-```{r echo=FALSE, Bivariate_Plots}
+Firstly, we will calculate the correlation matrix before we go ahead on more
+detailed analysis.
 
+```{r echo=FALSE, Bivariate_Plots}
+correlations = cor(redWineData, method = "pearson")
+corrplot(correlations, method="color")
 ```
 
+Let's look at the guess we made in part 1, fixed acidity/pH are highly related
+also for sulphates and the three SO2 fields. Turns out part of our guess is
+correct, fixed acidity and pH does have a very strong negative correlation.
+However there are no significant correlations with the sulplates fields with the
+other 3 sulfur related fields.
+
+Another focus was other high correlations between features. We found that there
+are high positive correlations with fixed.acidity and density/citric acid. Also,
+citric.acid is also fairly negatively correlated with volatile.acid and pH.
+Citric.acid is also fairly positive related with fixed.acidity.
+
+While sulplates are not particularly correlated with the three sulfur fields,
+the three sulfur fields are highly correlated themselves.
+
+So to conclude, I would drop a number of fields from further analysis, i.e. I
+will take total.sulfur.dioxide to represent all three sulfur fields, and pH to
+represent all acid-related fields).
+
+To be more solid about these integrated fields, we will plot graphs of sulfur
+fields and acidic fields to take a look at their trend.
+
+```{r echo=FALSE}
+sulfurP1 <- ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide),
+                   data=redWineData) + geom_point(alpha = 1/10) + geom_line() +
+geom_smooth(alpha=.2, size=1)
+sulfurP2 <- ggplot(aes(x = bound.sulfur.dioxide, y = total.sulfur.dioxide),
+                   data=redWineData) + geom_point(alpha = 1/10) + geom_line() +
+  geom_smooth(alpha=.2, size=1)
+grid.arrange(sulfurP1, sulfurP2)
+```
+
+These two graphs confirmed our view that total.sulfur.dioxide can conclude both
+free and bound sulfur dioxide features.
+
+```{r echo=FALSE}
+acidP1 <- ggplot(aes(x = fixed.acidity, y = pH), data=redWineData) +
+  geom_point(alpha = 1/10) +
+  geom_line() +
+  geom_smooth(alpha=.2, size=1)
+
+acidP2 <- ggplot(aes(x = volatile.acidity, y = pH), data=redWineData) +
+  geom_point(alpha = 1/10) +
+  geom_line() +
+  geom_smooth(alpha=.2, size=1)
+
+acidP3 <- ggplot(aes(x = citric.acid, y = pH), data=redWineData) +
+  geom_point(alpha = 1/10) +
+  geom_line() +
+  geom_smooth(alpha=.2, size=1)
+
+grid.arrange(acidP1, acidP2, acidP3)
+```
+
+These three plots also confirmed our views that fixed.acidity and citric.acid
+can be concluded by pH feature. While volatile.acidity showed a positive
+correlation with pH, that might actually referring to the higher volatile
+acidity, the lower the fixed acidity. But no matter what, pH would be a nice
+indicator of the acidity of the wine. If we are looking more closely with the
+correlation between pH and other fields, we would not be surprised that it also
+have a minor correlation with the acidic sulphur dioxide fields.
+
+We will conclude our first part of bivariate analysis for combining related
+features. Next, we will move on to the next part for finding features that are
+critical for predicting the quality of wine.
+
+We will now look at the correlation between quality and other features.
+
+We would immediately notice the strong negative relationship between quality and
+volatile.acidity. However, there are not strong correlation between pH and
+quality. Thus, the total acidity indication concept(pH) we came up in the last
+part is not really useful in predicting quality. In turn, we should put a lesser
+weight on other acidic features but focusing on volatile acidity.
+
+Also, it's easy to spot that alcohol level is having a strong positive
+relationship with quality.
+
+Therefore, in the next part, volatile.acidity and alcohol will be the main
+features that we are looking to predict the wine quality.
+
+According to the dataset description, there are 2 fields particularly important
+in terms of taste or favor, which are citric.acid and residual.sugar. One is
+providing a fresh taste and another is providing a sweet taste. Surprisingly,
+sweet taste (represented by residual.sugar) doesn't really correlated to quality
+while freshness (represented by citric.acid) have a weak effect on quality.
+
+We will now plot the scatter plot for our two main features of interests and one
+side feature for citric acid.
+
+```{r echo=FALSE}
+qualityP1 <- ggplot(aes(x = alcohol, y = quality), data=redWineData) +
+  geom_point(alpha = 1/10) + geom_line() + geom_smooth(alpha=.2, size=1)
+
+qualityP2 <- ggplot(aes(x = volatile.acidity, y = quality), data=redWineData) +
+  geom_point(alpha = 1/10) + geom_line() + geom_smooth(alpha=.2, size=1)
+
+qualityP3 <- ggplot(aes(x = citric.acid, y = quality), data=redWineData) +
+  geom_point(alpha = 1/10) + geom_line() + geom_smooth(alpha=.2, size=1)
+
+grid.arrange(qualityP1, qualityP2, qualityP3)
+```
+ 
 # Bivariate Analysis
 
 > **Tip**: As before, summarize what you found in your bivariate explorations
@@ -143,11 +302,41 @@ here. Use the questions below to guide your discussion.
 investigation. How did the feature(s) of interest vary with other features in \
 the dataset?
 
+There are two part of bivariate analysis. First part concerns the duplication or
+redundance fields.
+We concluded that pH field can act as an integrated indicator of multiple acidic
+fields including fixed.acidity, volatile.acidity and citric.acid. However, this
+pH indicator doesn't really correlate with the quality variable so we will put
+it aside for further investigation.
+
+We also found that the three sulphur fields can be concluded by the
+total.sulfur.dioxide field but this field also have a weak correlation with the
+quality variable.
+
+
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
+While we have selected volatile acidity, citric acid, residual sugar, free
+sulfur dioxide as main features to investigate in univariable analysis, we will
+need to change our main features into alcohol and volatile acidity after our
+analysis of correlation between quality and other fields.
+
+Only alcohol and volatile acidity is showing significat relationship with 
+quality in correlation analysis.
+
+Of couse we also found other interesting relationship like density is strongly
+correlated with fixed.acidity but negatively correlated with the alcohol level. 
+After some research, this is due to the fact that alcohol is having a lower 
+density than water, while acid is having a higher density than water.
 
 ### What was the strongest relationship you found?
-
+The strongest relationship I found is between pH and fixed.acidity. This
+actually makes a lot of sense as other acidic features are only in a small
+amount which hardly impact the overall pH value. This might also explained why
+pH doesn't really predict overall quality of wine as pH is dominated by 
+fixed.acidity which most experts didn't considered or feel like a critical 
+factor contributing to the quality. In fact, volatile.acidity is the main factor
+affecting the quality but it is under-repesented in the pH value.
 
 # Multivariate Plots Section
 
@@ -158,9 +347,165 @@ create here are justified by the plots you explored in the previous section. If
 you plan on creating any mathematical models, this is the section where you
 will do that.
 
-```{r echo=FALSE, Multivariate_Plots}
+In this section, we will focus on looking at how to predict quality of the wine.
+As we identified the two main fatures alread, we will first plot the graph for 
+the 2 main features and quality score.
 
+```{r echo=FALSE, Multivariate_Plots}
+redWineData$quality.factor <- as.factor(redWineData$quality)
+ggplot(aes(x = alcohol, y = volatile.acidity, color = quality.factor),
+       data=redWineData) + geom_point()
 ```
+
+From the plot above, it is easily seen that all the good quality wine are 
+distributed in the lower right part of the graph, indicating that the higher the
+alcohol level and the lower the volatile.acidity, the better the quality of the
+wine.
+
+We will also try to build a mathematical model of the data making use of the two
+main features. and do some predictions on the existing dataset based on the new
+model. (Note: we are not separating the data into training set and test set as 
+we are not going to do machine learning here. We just want to understand more 
+about the dataset and exploration)
+
+```{r echo=FALSE}
+model1 = lm(quality ~ alcohol + volatile.acidity, data = redWineData)
+summary(model1)
+
+redWineData['predicted'] = fitted(model1)
+redWineData['predicted.absError'] <- abs(redWineData['predicted'] -
+                                         redWineData['quality'])
+summary(redWineData['predicted.absError'])
+```
+
+With this simple model, we achieved a mean absolute error of 0.52, which is 
+pretty accurate without any advanced machine learning techniques. We might also 
+wanted to plot the absolute errors and see if this lower level of mean absolute 
+error happened just becuase of biased data.
+
+```{r echo=FALSE}
+ggplot(aes(x = predicted.absError), data = redWineData) +
+  geom_histogram(binwidth = 0.05) +
+  scale_x_continuous(breaks = 0:10)
+```
+
+From this plot, we can see that most of the predictions are having a error or 
+less than 1. In fact, according to the calculations that we did in the last 
+part, more than 75% of predictions are having an error less than 0.73. But it is
+also worth mentioned that according to the r^2 value, only 31.7% of the variance
+of quality is explanined by this model.
+
+In the bivariaate analysis, we also mentioned than citric.acid could be another 
+minor factor to contribute to the model. Let's put that into considerations.
+
+```{r echo=FALSE}
+model2 = lm(quality ~ alcohol + volatile.acidity, data = redWineData)
+summary(model2)
+
+redWineData['predicted.model2'] = fitted(model1)
+redWineData['predicted.model2.absError'] <- abs(redWineData['predicted.model2']
+                                                - redWineData['quality'])
+summary(redWineData['predicted.model2.absError'])
+
+ggplot(aes(x = predicted.model2.absError), data = redWineData) +
+  geom_histogram(binwidth = 0.05) +
+  scale_x_continuous(breaks = 0:10)
+```
+
+No matter from the stats or the absolute error plot, there are no significant 
+improvement after we add citric acid as a factor. So we will stop here and 
+settle with the 2 factor models for now. (Note: Either model is not a good model
+for predicting quality of red wine as they only explained less than 40% of the 
+variance. To have a we could create a better model with machine techniques in 
+the future, which is out of the scope of this project)
+
+Before we conclude the multivariate analsis section, we will do a bit more 
+analysis on the features to see if there are anything interesting.
+A while ago we were interested in using pH to represent all the acidic features,
+let's see if that's accurate.
+
+
+```{r echo=FALSE}
+acidScatterPlot1 <- ggplot(aes(x = fixed.acidity, y = volatile.acidity,
+                               color = pH), data=redWineData) + geom_point() 
+
+acidScatterPlot2 <- ggplot(aes(x = fixed.acidity, y = citric.acid,  color = pH),
+                           data=redWineData) + geom_point() 
+
+acidScatterPlot3 <- ggplot(aes(x = fixed.acidity, y = total.sulfur.dioxide,
+                               color = pH), data=redWineData) + geom_point() 
+
+grid.arrange(acidScatterPlot1, acidScatterPlot2, acidScatterPlot3)
+```
+
+These two plots confirm that the pH value are dominated by the fixed.acidity and
+not really impacted by other acidity values.
+
+Another thing that worth looking into is the sulphates and free.sulfur.dioxide, 
+which both are helping to preserve the wine by prevents microbial growth and the
+ocidation. Is quality impacted by these two factors?
+
+```{r echo=FALSE}
+ggplot(aes(x = free.sulfur.dioxide, y = sulphates, color = quality.factor),
+       data=redWineData) + geom_point()
+```
+
+Interestingly, seems there are no relationship between these wine preservative 
+and the quality. Maybe the the winemakers would tune the level of perservative 
+to a suitable amount which higher level or perservative doesn't meant the wine 
+is perserved in a better way.
+
+So what about the level of volatile acidity and the preservatives?
+
+```{r echo=FALSE}
+ggplot(aes(x = free.sulfur.dioxide, y = sulphates, color = volatile.acidity),
+       data=redWineData) + geom_point(alpha=0.3) + geom_jitter()
+```
+
+While there are no obviously trend of between perservatives and acidity, but 
+there seems to be a really minor ground of high volatile acidity and low value 
+in both sulphates and free.sulfur.dioxide level. Let's try to create a 
+perservative index by normalizing both perservatives fields and adding them up.
+
+```{r echo=FALSE}
+redWineData['free.sulfur.dioxide.scaled'] =
+  scale(redWineData['free.sulfur.dioxide'])
+redWineData['sulphates.scaled'] = scale(redWineData['sulphates'])
+
+redWineData['perservatives'] = redWineData['free.sulfur.dioxide.scaled'] +
+  redWineData['sulphates.scaled']
+
+ggplot(aes(x = perservatives, y = volatile.acidity), data=redWineData) +
+  geom_point(alpha = 1/10) + geom_line() + geom_smooth(alpha=.2, size=1) +
+  scale_x_continuous(breaks = -10:10)
+```
+
+And here come the relationships of perservatives and volatile acidity: 
+perservatives does help in perserving the wine by preventing the excess volatile
+acidity. However, one it surpassed a critical level(our perservative index of 
+around 1), adding more perservative doesn't help in improving the quality or 
+taste of the wine. So are sulpates and free.sulfur.dioxide complement of each 
+other?
+
+```{r echo=FALSE}
+ggplot(aes(x = free.sulfur.dioxide.scaled, y = sulphates.scaled),
+       data=redWineData) + geom_point(alpha = 1/10) + geom_line() +
+  geom_smooth(alpha=.2, size=1) +
+  scale_x_continuous(breaks = -10:10)
+```
+
+From this plot, we don't see any complement relationship between sulphates and 
+free.sulfur.dioxide. In fact, they don't seem to have any relationships at all.
+
+While a lot of people prefer sweeter taste, let's also look at the relationship 
+of citric.acid and residual.sugar
+```{r echo=FALSE}
+ggplot(aes(x = citric.acid, y = residual.sugar, color = quality.factor),
+       data=redWineData) + geom_point()
+```
+
+From this plot, it's clear that there are no particular preferences of sweetness
+for the experts evaluating these wine.
 
 # Multivariate Analysis
 
@@ -168,10 +513,42 @@ will do that.
 investigation. Were there features that strengthened each other in terms of \
 looking at your feature(s) of interest?
 
+There are two chemicals, free sulfur dioxide and sulphates contributing to the 
+preservation of the wine but their amount doesn't really impact the quality. 
+However, if we are keeping the free sulfur dioxide level as constant, the higher
+the sulphates, the better the quality of the wine. But in fact, both factor 
+doesn't really contribute to the overall quality of the wine.
+
+I also looked into experts preferences of sweetness of the wine but no 
+particular trends were found. Apparently the experts doesn't really have 
+preferences of sweetness or taste of freshness of the wine.
+
 ### Were there any interesting or surprising interactions between features?
+
+We also looked at relationships of perservatives and volatile.acidity(a critical
+determinant of quality). perservatives does help in perserving the wine by 
+preventing the excess volatile acidity. However, one it surpassed a critical 
+level(our perservative index of around 1), adding more perservative doesn't 
+help in improving the quality or taste of the wine. So are sulpates and 
+free.sulfur.dioxide complement of each other?
+
+I also originally thought that the two perservatives features must have some 
+kind of relationships, either positive relationships or complement but it seems 
+that even we standardized the two perservative feature, they don't seems to have
+any relationships.
 
 ### OPTIONAL: Did you create any models with your dataset? Discuss the \
 strengths and limitations of your model.
+
+I created a linear model based on the two main features that we identified, 
+alcohol level and volatile acidity. While the good side of the model is that we 
+are able to predict most (>75%) wines' quality score with less than 0.5 
+difference comparing to the actual score (given that we are having a integer 
+scale). However, the R^2 statistics is showing that only 30% of the quality 
+variance is explanined by this model. To have a we could create a better model 
+with machine techniques in the future, which is out of the scope of this 
+project.
+
 
 ------
 
@@ -186,27 +563,63 @@ units), and good aesthetic choices (e.g. color, transparency). After each plot,
 make sure you justify why you chose each plot by describing what it shows.
 
 ### Plot One
-```{r echo=FALSE, Plot_One}
-
+```{r echo=FALSE, Plot_One, fig.width=10,fig.height=8}
+ggplot(data = melt(redWineData), mapping = aes(x = value)) + 
+    geom_histogram(bins = 10) + facet_wrap(~variable, scales = 'free_x') + 
+    ggtitle("Distribution of All Features in Red Wine Dataset") + 
+    theme(plot.title = element_text(hjust = 0.5), axis.title.x=element_blank(),
+          axis.title.y=element_blank())
 ```
 
 ### Description One
-
+The histogram of each of the features gave us a concept of the distribution of 
+variables and which one we should forget about. From the histogram that we 
+plotted, we can see that there are a number of fields are having not much 
+variation in values at all, examples are chlorides and density.
 
 ### Plot Two
-```{r echo=FALSE, Plot_Two}
-
+```{r echo=FALSE, Plot_Two, fig.width=8,fig.height=8}
+correlations = cor(redWineData[c('fixed.acidity', 'volatile.acidity',
+                                 'citric.acid', 'residual.sugar', 'chlorides',
+                                 'free.sulfur.dioxide', 'bound.sulfur.dioxide',
+                                 'total.sulfur.dioxide', 'density', 'pH',
+                                 'sulphates', 'alcohol', 'quality')],
+                   method = "pearson")
+corrplot(correlations, method="color",
+         title="Correlation Matrix of Features in Red Wine Dataset")
 ```
 
 ### Description Two
+This plot showed us the correlations between all the fields and help us finding 
+out the fields that can be combined and fields that contributing most to 
+quality. We identified that pH could sum up all the acidity fields (which later 
+proved wrong) and total.sulfur.dioxide could be used to sum up all three 
+sulfur.dioxide fields.
 
+We also identified the two main factors for predicting the quality score, 
+alcohol and volatile.acidity.
 
 ### Plot Three
 ```{r echo=FALSE, Plot_Three}
+ggplot(aes(x = alcohol, y = volatile.acidity, color = quality.factor),
+       data=redWineData) +
+  geom_point() +
+  ggtitle("Scatter Plot on Volatile Acidity and Alcohol Level,\
+          Colored by pH Value") + 
+  xlab("Alcohol Level") +
+  ylab("Volatile Acidity") +
+  labs(color='Wine Quality') +
+  theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
 ### Description Three
+This plot is showing the relationship between the two main features and the 
+quality. This plot proved our thought that alcohol and volatile.acidity can 
+predict the wine quality. We ended up with a mathematical model of 
+quality = 0.31381 * alcohol - 1.38364 * volatile.acidity + 3.09547 which are 
+able to predict more than 75% of our data with less than 0.5 absolute error 
+in quality.
 
 ------
 
@@ -217,5 +630,30 @@ the insights you found. What were some of the struggles that you went through?
 What went well? What was surprising? Make sure you include an insight into
 future work that could be done with the dataset.
 
+This red wine dataset is a pretty small dataset with only 1599 observations. 
+However, there were a lot that could be investigated with these 12 variables. 
+I first tried to plot a histogram of all variable to understand the overview 
+of the data first and that went quite well. However this doesn't helped me in 
+identifying the features that we related to quality. This need to be done in 
+bivariate analysis. All the important features that I identified in univariate 
+analysis section turns out to be not really meaningful, while a variable I 
+ignored (alcohol) turns out to be very important.
+
+I was also surprised that a lot of factors that might seems important to a lot 
+of people like sweetness, are not that important in experts' eye. At the same 
+time, alcohol level seemed to be not that important in terms of quality was 
+extremely imprtant predictor.
+
+The model and investigations that I did in this project is based on considering 
+the vairables as individual features, i.e. we didn't really develop new features
+by combining multiple features. Thus, the model is too simple to give an 
+accurate prediction. According to the R^2 score, only less than 40% of the 
+variance of the quality is explained by this simple model.
+
+To further work on this dataset, we should employ more advanced machine learning
+techniques. Algorithms like neural network are better at combining multiple 
+features and come up with comprehensive mathematical model. These models can 
+also take more factors into considerations.
+ 
 > **Tip**: Don't forget to remove this, and the other **Tip** sections before
 saving your final work and knitting the final report!
