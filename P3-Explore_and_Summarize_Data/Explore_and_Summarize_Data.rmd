@@ -1,3 +1,8 @@
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+                      echo=FALSE, warning=FALSE, message=FALSE)
+```
+
 Red Wine Exploration by Darren
 ========================================================
 
@@ -92,7 +97,8 @@ some interesting fields that we should take a closer look.sum(is.na(z$Ozone))
 
 ```{r echo=FALSE}
 ggplot(data = melt(redWineData), mapping = aes(x = value)) + 
-    geom_histogram(bins = 10) + facet_wrap(~variable, scales = 'free_x')
+  geom_histogram(bins = 10) +
+  facet_wrap(~variable, scales = 'free_x')
 ```
 
 from the histogram that we plotted, we can see that there are a number of fields
@@ -109,14 +115,51 @@ just ignore them in the upcoming analysis, suspecting that they are not
 contributing much to the quality. The actual correlation of this will leave to
 bivariate analysis.
 
-As we would like to understand more about the distribution of chlorides and
-density, so we will plot them individually here.
+We would also like to know more about each of the interested fields(those 
+mentioned in the dataset description that would affect the taste, i.e. volatile
+acidity, citric acid, residual sugar, free sulfur dioxide), let's try to plot the interested fields individually.
 
 ```{r echo=FALSE}
-create_histogram_for_feature('chlorides', 0.01)
-create_histogram_for_feature('density', 0.001)
+create_histogram_for_feature('volatile.acidity', 0.1)
+create_histogram_for_feature('citric.acid', 0.1)
+create_histogram_for_feature('residual.sugar', 0.1)
+create_histogram_for_feature('free.sulfur.dioxide', 1)
 ```
 
+The volatile acidity graph looks distributed normally. Citric acid seems to have a pretty uniform distribution across different level. The residual suagr one and the free.sulfur.dioxide one looks skewed. Let's try to plot them in log scale and see if there are anything interesting.
+
+```{r echo=FALSE}
+create_histogram_for_feature('residual.sugar', 0.05) + 
+  scale_x_log10()
+create_histogram_for_feature('free.sulfur.dioxide', 0.1) + 
+  scale_x_log10()
+```
+
+We can see that free.sulfur.dioxide one looks much more normal after transforming into log scale. I would say we should analyse free.sulfur.dioxide in log scale going forward.
+
+For residual.sugar, actually they are hving a similar distribution as the orginal scaled one. In fact, if we look at the original one closely, we can see that the graph is not that skewed. It looks skewed just because there are some outliers on the right side. I guess those are the specially fruit favoured wine.
+
+With this findings, it would also make sense for us to plot histogram for total and bound sulfur distribution as well.
+```{r echo=FALSE}
+create_histogram_for_feature('total.sulfur.dioxide', 1)
+create_histogram_for_feature('bound.sulfur.dioxide', 1)
+```
+Both are also very skewed. Let's try to plot them in log scale.
+
+```{r echo=FALSE}
+create_histogram_for_feature('total.sulfur.dioxide', 0.1) + 
+  scale_x_log10()
+create_histogram_for_feature('bound.sulfur.dioxide', 0.1) + 
+  scale_x_log10()
+```
+
+Both look distributed normally now. So here, we will create a new field for log-scaled free.sulfur.dioxide, bound.sulfur.dioxide and total.sulfur.dioxide.
+
+```{r echo=FALSE}
+redWineData['free.sulfur.dioxide.log'] = log(redWineData['free.sulfur.dioxide'])
+redWineData['bound.sulfur.dioxide.log'] = log(redWineData['bound.sulfur.dioxide'])
+redWineData['total.sulfur.dioxide.log'] = log(redWineData['total.sulfur.dioxide'])
+```
 
 > **Tip**: Make sure that you leave a blank line between the start / end of
 each code block and the end / start of your Markdown text so that it is
@@ -160,10 +203,14 @@ correlation analysis in the next part to confirm these relationships.
 
 
 ### Did you create any new variables from existing variables in the dataset?
-I also created a new field for bound form of sulfur dioxide, which is
+I created a new field for bound form of sulfur dioxide, which is
 (total.sulfur.dioxide - free.sulfur.dioxide). While we don't know if bounded
 form of SO2 would be of interest or correlation with the quality, we could do
 some correlation analysis in the next section.
+
+As we found that sulfur.dioxide fields seems skewed and we tried to plot them 
+with log scale. With log-scaled, we found that they are now distributed more 
+normally. So we also created log-scaled version of these fields.
 
 ### Of the features you investigated, were there any unusual distributions? \
 Did you perform any operations on the data to tidy, adjust, or change the form \
@@ -204,35 +251,33 @@ citric.acid is also fairly negatively correlated with volatile.acid and pH.
 Citric.acid is also fairly positive related with fixed.acidity.
 
 While sulplates are not particularly correlated with the three sulfur fields,
-the three sulfur fields are highly correlated themselves.
+the three sulfur fields(both log and non-log scaled version) are highly 
+correlated themselves.
 
 So to conclude, I would drop a number of fields from further analysis, i.e. I
-will take total.sulfur.dioxide to represent all three sulfur fields, and pH to
+will take total.sulfur.dioxide.log to represent all three sulfur fields, and pH to
 represent all acid-related fields).
 
 To be more solid about these integrated fields, we will plot graphs of sulfur
 fields and acidic fields to take a look at their trend.
 
 ```{r echo=FALSE}
-sulfurP1 <- ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide),
-                   data=redWineData) + geom_point(alpha = 1/10) +
-  geom_smooth(alpha=.2, size=1)
-sulfurP2 <- ggplot(aes(x = bound.sulfur.dioxide, y = total.sulfur.dioxide),
-                   data=redWineData) + geom_point(alpha = 1/10) +
-  geom_smooth(alpha=.2, size=1)
-grid.arrange(sulfurP1, sulfurP2)
-```
-
-These two graphs confirmed our view that total.sulfur.dioxide can conclude both
-free and bound sulfur dioxide features.
-
-```{r echo=FALSE}
-create_scatter_plot <- function(feature_x, feature_y){
+create_scatter_plot <- function(feature_x, feature_y) {
   return (ggplot(aes_string(x = feature_x, y = feature_y), data=redWineData) +
   geom_point(alpha = 1/10) +
   geom_smooth(alpha=.2, size=1))
 }
 
+sulfurP1 <- create_scatter_plot('free.sulfur.dioxide.log', 'total.sulfur.dioxide.log')
+sulfurP2 <- create_scatter_plot('bound.sulfur.dioxide.log', 'total.sulfur.dioxide.log')
+
+grid.arrange(sulfurP1, sulfurP2)
+```
+
+These two graphs confirmed our view that total.sulfur.dioxide.log can conclude both
+free and bound sulfur dioxide features.
+
+```{r echo=FALSE}
 acidP1 <- create_scatter_plot('fixed.acidity', 'pH')
 acidP2 <- create_scatter_plot('volatile.acidity', 'pH')
 acidP3 <- create_scatter_plot('citric.acid', 'pH')
@@ -277,12 +322,8 @@ side feature for citric acid.
 
 ```{r echo=FALSE}
 qualityP1 <- create_scatter_plot('alcohol', 'quality')
-
-qualityP2 <- ggplot(aes(x = volatile.acidity, y = quality), data=redWineData) +
-  geom_point(alpha = 1/10) + geom_smooth(alpha=.2, size=1)
-
-qualityP3 <- ggplot(aes(x = citric.acid, y = quality), data=redWineData) +
-  geom_point(alpha = 1/10) + geom_smooth(alpha=.2, size=1)
+qualityP2 <- create_scatter_plot('volatile.acidity', 'quality')
+qualityP3 <- create_scatter_plot('citric.acid', 'quality')
 
 grid.arrange(qualityP1, qualityP2, qualityP3)
 ```
@@ -304,7 +345,7 @@ pH indicator doesn't really correlate with the quality variable so we will put
 it aside for further investigation.
 
 We also found that the three sulphur fields can be concluded by the
-total.sulfur.dioxide field but this field also have a weak correlation with the
+total.sulfur.dioxide.log field but this field also have a weak correlation with the
 quality variable.
 
 
@@ -348,7 +389,9 @@ the 2 main features and quality score.
 ```{r echo=FALSE, Multivariate_Plots}
 redWineData$quality.factor <- as.factor(redWineData$quality)
 ggplot(aes(x = alcohol, y = volatile.acidity, color = quality.factor),
-       data=redWineData) + geom_point()
+       data=redWineData) +
+  geom_point() +
+  scale_colour_brewer(type = "seq", palette = 2)
 ```
 
 From the plot above, it is easily seen that all the good quality wine are 
@@ -378,9 +421,7 @@ wanted to plot the absolute errors and see if this lower level of mean absolute
 error happened just becuase of biased data.
 
 ```{r echo=FALSE}
-ggplot(aes(x = predicted.absError), data = redWineData) +
-  geom_histogram(binwidth = 0.05) +
-  scale_x_continuous(breaks = 0:10)
+create_histogram_for_feature('predicted.absError', 0.05)
 ```
 
 From this plot, we can see that most of the predictions are having a error or 
@@ -401,9 +442,7 @@ redWineData['predicted.model2.absError'] <- abs(redWineData['predicted.model2']
                                                 - redWineData['quality'])
 summary(redWineData['predicted.model2.absError'])
 
-ggplot(aes(x = predicted.model2.absError), data = redWineData) +
-  geom_histogram(binwidth = 0.05) +
-  scale_x_continuous(breaks = 0:10)
+create_histogram_for_feature('predicted.model2.absError', 0.05)
 ```
 
 No matter from the stats or the absolute error plot, there are no significant 
@@ -420,14 +459,18 @@ let's see if that's accurate.
 
 
 ```{r echo=FALSE}
-acidScatterPlot1 <- ggplot(aes(x = fixed.acidity, y = volatile.acidity,
-                               color = pH), data=redWineData) + geom_point() 
+create_scatter_plot_without_line <- function(feature_x, feature_y){
+  return (ggplot(aes_string(x = feature_x, y = feature_y,
+                               color = 'pH'), data=redWineData) +
+            geom_point())
+}
 
-acidScatterPlot2 <- ggplot(aes(x = fixed.acidity, y = citric.acid,  color = pH),
-                           data=redWineData) + geom_point() 
-
-acidScatterPlot3 <- ggplot(aes(x = fixed.acidity, y = total.sulfur.dioxide,
-                               color = pH), data=redWineData) + geom_point() 
+acidScatterPlot1 <- create_scatter_plot_without_line('fixed.acidity',
+                                                     'volatile.acidity')
+acidScatterPlot2 <- create_scatter_plot_without_line('fixed.acidity',
+                                                     'citric.acid')
+acidScatterPlot3 <- create_scatter_plot_without_line('fixed.acidity',
+                                                     'total.sulfur.dioxide.log')
 
 grid.arrange(acidScatterPlot1, acidScatterPlot2, acidScatterPlot3)
 ```
@@ -435,13 +478,15 @@ grid.arrange(acidScatterPlot1, acidScatterPlot2, acidScatterPlot3)
 These two plots confirm that the pH value are dominated by the fixed.acidity and
 not really impacted by other acidity values.
 
-Another thing that worth looking into is the sulphates and free.sulfur.dioxide, 
+Another thing that worth looking into is the sulphates and free.sulfur.dioxide.log, 
 which both are helping to preserve the wine by prevents microbial growth and the
 ocidation. Is quality impacted by these two factors?
 
 ```{r echo=FALSE}
-ggplot(aes(x = free.sulfur.dioxide, y = sulphates, color = quality.factor),
-       data=redWineData) + geom_point()
+ggplot(aes(x = free.sulfur.dioxide.log, y = sulphates, color = quality.factor),
+       data=redWineData) +
+  geom_point() +
+  scale_colour_brewer(type = "seq", palette = 2)
 ```
 
 Interestingly, seems there are no relationship between these wine preservative 
@@ -452,25 +497,26 @@ is perserved in a better way.
 So what about the level of volatile acidity and the preservatives?
 
 ```{r echo=FALSE}
-ggplot(aes(x = free.sulfur.dioxide, y = sulphates, color = volatile.acidity),
-       data=redWineData) + geom_point(alpha=0.3) + geom_jitter()
+ggplot(aes(x = free.sulfur.dioxide.log, y = sulphates, color = volatile.acidity),
+       data=redWineData) +
+  geom_point() +
+  geom_jitter()
 ```
 
 While there are no obviously trend of between perservatives and acidity, but 
 there seems to be a really minor ground of high volatile acidity and low value 
-in both sulphates and free.sulfur.dioxide level. Let's try to create a 
+in both sulphates and free.sulfur.dioxide.log level. Let's try to create a 
 perservative index by normalizing both perservatives fields and adding them up.
 
 ```{r echo=FALSE}
-redWineData['free.sulfur.dioxide.scaled'] =
-  scale(redWineData['free.sulfur.dioxide'])
+redWineData['free.sulfur.dioxide.log.scaled'] =
+  scale(redWineData['free.sulfur.dioxide.log'])
 redWineData['sulphates.scaled'] = scale(redWineData['sulphates'])
 
-redWineData['perservatives'] = redWineData['free.sulfur.dioxide.scaled'] +
+redWineData['perservatives'] = redWineData['free.sulfur.dioxide.log.scaled'] +
   redWineData['sulphates.scaled']
 
-ggplot(aes(x = perservatives, y = volatile.acidity), data=redWineData) +
-  geom_point(alpha = 1/10) + geom_line() + geom_smooth(alpha=.2, size=1) +
+create_scatter_plot('perservatives', 'volatile.acidity') +
   scale_x_continuous(breaks = -10:10)
 ```
 
@@ -478,24 +524,25 @@ And here come the relationships of perservatives and volatile acidity:
 perservatives does help in perserving the wine by preventing the excess volatile
 acidity. However, one it surpassed a critical level(our perservative index of 
 around 1), adding more perservative doesn't help in improving the quality or 
-taste of the wine. So are sulpates and free.sulfur.dioxide complement of each 
+taste of the wine. So are sulpates and free.sulfur.dioxide.log complement of each 
 other?
 
 ```{r echo=FALSE}
-ggplot(aes(x = free.sulfur.dioxide.scaled, y = sulphates.scaled),
-       data=redWineData) + geom_point(alpha = 1/10) + geom_line() +
-  geom_smooth(alpha=.2, size=1) +
+
+create_scatter_plot('free.sulfur.dioxide.log.scaled','sulphates.scaled') +
   scale_x_continuous(breaks = -10:10)
 ```
 
 From this plot, we don't see any complement relationship between sulphates and 
-free.sulfur.dioxide. In fact, they don't seem to have any relationships at all.
+free.sulfur.dioxide.log. In fact, they don't seem to have any relationships at all.
 
 While a lot of people prefer sweeter taste, let's also look at the relationship 
 of citric.acid and residual.sugar
 ```{r echo=FALSE}
 ggplot(aes(x = citric.acid, y = residual.sugar, color = quality.factor),
-       data=redWineData) + geom_point()
+       data=redWineData) +
+  geom_point() +
+  scale_colour_brewer(type = "seq", palette = 2)
 ```
 
 From this plot, it's clear that there are no particular preferences of sweetness
@@ -524,7 +571,7 @@ determinant of quality). perservatives does help in perserving the wine by
 preventing the excess volatile acidity. However, one it surpassed a critical 
 level(our perservative index of around 1), adding more perservative doesn't 
 help in improving the quality or taste of the wine. So are sulpates and 
-free.sulfur.dioxide complement of each other?
+free.sulfur.dioxide.log complement of each other?
 
 I also originally thought that the two perservatives features must have some 
 kind of relationships, either positive relationships or complement but it seems 
@@ -558,18 +605,18 @@ make sure you justify why you chose each plot by describing what it shows.
 
 ### Plot One
 ```{r echo=FALSE, Plot_One, fig.width=10,fig.height=8}
-ggplot(data = melt(redWineData), mapping = aes(x = value)) + 
-    geom_histogram(bins = 10) + facet_wrap(~variable, scales = 'free_x') + 
-    ggtitle("Distribution of All Features in Red Wine Dataset") + 
-    theme(plot.title = element_text(hjust = 0.5), axis.title.x=element_blank(),
-          axis.title.y=element_blank())
+acidScatterPlot1 <- create_scatter_plot_without_line('fixed.acidity',
+                                                     'volatile.acidity')
+acidScatterPlot2 <- create_scatter_plot_without_line('fixed.acidity',
+                                                     'citric.acid')
+acidScatterPlot3 <- create_scatter_plot_without_line('fixed.acidity',
+                                                     'total.sulfur.dioxide.log')
+
+grid.arrange(acidScatterPlot1, acidScatterPlot2, acidScatterPlot3)
 ```
 
 ### Description One
-The histogram of each of the features gave us a concept of the distribution of 
-variables and which one we should forget about. From the histogram that we 
-plotted, we can see that there are a number of fields are having not much 
-variation in values at all, examples are chlorides and density.
+The combination of the three acidic features against the fixed.acidity, coloured by the pH value indicated that an interesting fact that the pH value of the wine is dominated by fixed.acidity. All other acidic chemicals seems to have no significant impact on pH value. That make a lot of sense in terms of chemistry. total.sulfur.dioxide are in a degree of mg/dm^3 while all other acidic fields are in g/dm^3. So we can safely ignore the effect of SO2 on pH value. If we are looking at citric acid, volatile acidity and fixed acidity, citric acid and volatile acid are in the degree of 10^-1 g/dm^3 while fixed.acidity is in the degree of 10^1 g/dm3. Assuming that they have less than 100 times of molarity differences, fixed acidity will have a absolute impact on acidity. But more interestingly is that, volatile acidity is contributing so much on the quality score. After some research on wikipedia, the reason is that acetic acid has a distinctive pungent smell, and in fact a main component of vineger.
 
 ### Plot Two
 ```{r echo=FALSE, Plot_Two, fig.width=8,fig.height=8}
@@ -587,7 +634,7 @@ corrplot(correlations, method="color",
 This plot showed us the correlations between all the fields and help us finding 
 out the fields that can be combined and fields that contributing most to 
 quality. We identified that pH could sum up all the acidity fields (which later 
-proved wrong) and total.sulfur.dioxide could be used to sum up all three 
+proved wrong) and total.sulfur.dioxide.log could be used to sum up all 
 sulfur.dioxide fields.
 
 We also identified the two main factors for predicting the quality score, 
@@ -603,7 +650,8 @@ ggplot(aes(x = alcohol, y = volatile.acidity, color = quality.factor),
   xlab("Alcohol Level") +
   ylab("Volatile Acidity") +
   labs(color='Wine Quality') +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_colour_brewer(type = "seq", palette = 2)
 
 ```
 
