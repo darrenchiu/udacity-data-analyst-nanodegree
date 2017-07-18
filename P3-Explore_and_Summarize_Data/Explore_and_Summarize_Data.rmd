@@ -70,9 +70,12 @@ ultimately find out the relationship between quality and other variable, let's
 take a look at the quality distribution first.
 
 ```{r echo=FALSE}
-ggplot(aes(x = quality), data = redWineData) +
-  geom_histogram(binwidth = 1) +
-  scale_x_continuous(breaks = 0:10)
+create_histogram_for_feature <- function(variable, binwidth = 0.01) {
+  return(ggplot(aes_string(x = variable), data = redWineData) + 
+           geom_histogram(binwidth = binwidth))
+}
+
+create_histogram_for_feature('quality', 1)
 ```
 
 As total.sulfur.dioxide is sum of free and bound sulfur dioxide, I would like to
@@ -110,11 +113,8 @@ As we would like to understand more about the distribution of chlorides and
 density, so we will plot them individually here.
 
 ```{r echo=FALSE}
-ggplot(aes(x = chlorides), data = redWineData) +
-  geom_histogram(binwidth = 0.01)
-
-ggplot(aes(x = density), data = redWineData) +
-  geom_histogram(binwidth = 0.001)
+create_histogram_for_feature('chlorides', 0.01)
+create_histogram_for_feature('density', 0.001)
 ```
 
 
@@ -215,10 +215,10 @@ fields and acidic fields to take a look at their trend.
 
 ```{r echo=FALSE}
 sulfurP1 <- ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide),
-                   data=redWineData) + geom_point(alpha = 1/10) + geom_line() +
-geom_smooth(alpha=.2, size=1)
+                   data=redWineData) + geom_point(alpha = 1/10) +
+  geom_smooth(alpha=.2, size=1)
 sulfurP2 <- ggplot(aes(x = bound.sulfur.dioxide, y = total.sulfur.dioxide),
-                   data=redWineData) + geom_point(alpha = 1/10) + geom_line() +
+                   data=redWineData) + geom_point(alpha = 1/10) +
   geom_smooth(alpha=.2, size=1)
 grid.arrange(sulfurP1, sulfurP2)
 ```
@@ -227,20 +227,15 @@ These two graphs confirmed our view that total.sulfur.dioxide can conclude both
 free and bound sulfur dioxide features.
 
 ```{r echo=FALSE}
-acidP1 <- ggplot(aes(x = fixed.acidity, y = pH), data=redWineData) +
+create_scatter_plot <- function(feature_x, feature_y){
+  return (ggplot(aes_string(x = feature_x, y = feature_y), data=redWineData) +
   geom_point(alpha = 1/10) +
-  geom_line() +
-  geom_smooth(alpha=.2, size=1)
+  geom_smooth(alpha=.2, size=1))
+}
 
-acidP2 <- ggplot(aes(x = volatile.acidity, y = pH), data=redWineData) +
-  geom_point(alpha = 1/10) +
-  geom_line() +
-  geom_smooth(alpha=.2, size=1)
-
-acidP3 <- ggplot(aes(x = citric.acid, y = pH), data=redWineData) +
-  geom_point(alpha = 1/10) +
-  geom_line() +
-  geom_smooth(alpha=.2, size=1)
+acidP1 <- create_scatter_plot('fixed.acidity', 'pH')
+acidP2 <- create_scatter_plot('volatile.acidity', 'pH')
+acidP3 <- create_scatter_plot('citric.acid', 'pH')
 
 grid.arrange(acidP1, acidP2, acidP3)
 ```
@@ -281,14 +276,13 @@ We will now plot the scatter plot for our two main features of interests and one
 side feature for citric acid.
 
 ```{r echo=FALSE}
-qualityP1 <- ggplot(aes(x = alcohol, y = quality), data=redWineData) +
-  geom_point(alpha = 1/10) + geom_line() + geom_smooth(alpha=.2, size=1)
+qualityP1 <- create_scatter_plot('alcohol', 'quality')
 
 qualityP2 <- ggplot(aes(x = volatile.acidity, y = quality), data=redWineData) +
-  geom_point(alpha = 1/10) + geom_line() + geom_smooth(alpha=.2, size=1)
+  geom_point(alpha = 1/10) + geom_smooth(alpha=.2, size=1)
 
 qualityP3 <- ggplot(aes(x = citric.acid, y = quality), data=redWineData) +
-  geom_point(alpha = 1/10) + geom_line() + geom_smooth(alpha=.2, size=1)
+  geom_point(alpha = 1/10) + geom_smooth(alpha=.2, size=1)
 
 grid.arrange(qualityP1, qualityP2, qualityP3)
 ```
