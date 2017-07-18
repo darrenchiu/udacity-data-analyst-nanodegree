@@ -362,7 +362,8 @@ redWineData$quality.factor <- as.factor(redWineData$quality)
 ggplot(aes(x = alcohol, y = volatile.acidity, color = quality.factor),
        data=redWineData) +
   geom_point() +
-  scale_colour_brewer(type = "seq", palette = 2)
+  scale_colour_brewer(type = "seq", palette = 2) +
+  theme_dark()
 ```
 
 From the plot above, it is easily seen that all the good quality wine are 
@@ -458,7 +459,8 @@ ocidation. Is quality impacted by these two factors?
 ggplot(aes(x = free.sulfur.dioxide.log, y = sulphates, color = quality.factor),
        data=redWineData) +
   geom_point() +
-  scale_colour_brewer(type = "seq", palette = 2)
+  scale_colour_brewer(type = "seq", palette = 2) +
+  theme_dark()
 ```
 
 Interestingly, seems there are no relationship between these wine preservative 
@@ -472,7 +474,9 @@ So what about the level of volatile acidity and the preservatives?
 ggplot(aes(x = free.sulfur.dioxide.log, y = sulphates, color = volatile.acidity),
        data=redWineData) +
   geom_point() +
-  geom_jitter()
+  geom_jitter() +
+  scale_color_gradient(low="white", high="red") +
+  theme_dark()
 ```
 
 While there are no obviously trend of between perservatives and volatile 
@@ -514,7 +518,8 @@ of citric.acid and residual.sugar
 ggplot(aes(x = citric.acid, y = residual.sugar, color = quality.factor),
        data=redWineData) +
   geom_point() +
-  scale_colour_brewer(type = "seq", palette = 2)
+  scale_colour_brewer(type = "seq", palette = 2) +
+  theme_dark()
 ```
 
 From this plot, it's clear that there are no particular preferences of sweetness
@@ -619,7 +624,7 @@ acidScatterPlot2 <- create_scatter_plot_without_line('fixed.acidity',
 
 acidScatterPlot3 <- create_scatter_plot_without_line('fixed.acidity',
                                                      'total.sulfur.dioxide.log') +
-  ggtitle("Scatter Plot on Citric Acid and Fixed Acidity,\
+  ggtitle("Scatter Plot on Total Sulfur Dioxide in Log Scale and Fixed Acidity,\
           Colored by pH Value") + 
   xlab("Fixed Acidity Level (g/dm^3)") +
   ylab("Total Sulfur Dioxide Level in Log Scale (mg/dm^3)") +
@@ -648,13 +653,13 @@ ggplot(aes(x = alcohol, y = volatile.acidity, color = quality.factor),
        data=redWineData) +
   geom_point() +
   ggtitle("Scatter Plot on Volatile Acidity and Alcohol Level,\
-          Colored by pH Value") + 
-  xlab("Alcohol Level") +
-  ylab("Volatile Acidity") +
+          Colored by Quality Score") + 
+  xlab("Alcohol Level (% by volume)") +
+  ylab("Volatile Acidity (g/dm^3)") +
   labs(color='Wine Quality') +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_colour_brewer(type = "seq", palette = 2)
-
+  scale_colour_brewer(type = "seq", palette = 2) +
+  theme_dark() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ### Description Three
