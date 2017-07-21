@@ -6,20 +6,42 @@ import pickle
 sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
-from outliers_detector import outliers
 from tester import dump_classifier_and_data
 from sklearn.svm import SVC
+from sklearn import tree
 import numpy as np
-from sklearn.metrics import precision_score
+from sklearn.metrics import precision_score, recall_score
 from sklearn import model_selection
+from sklearn.naive_bayes import GaussianNB
+
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-features_list = ['poi', 'from_this_person_to_poi', 'from_poi_to_this_person',
-                 'shared_receipt_with_poi']  # You will need to use more features
-features_list_without_poi = ['from_this_person_to_poi', 'from_poi_to_this_person',
-                             'shared_receipt_with_poi']  # You will need to use more features
+sorted_features = [
+    'total_stock_value',
+    'exercised_stock_options',
+    'deferred_income',
+    'from_this_person_to_poi',
+    'restricted_stock',
+    'other',
+    'long_term_incentive',
+    'total_payments',
+    'number_of_missing_fields',
+    'salary',
+    'bonus',
+    'shared_receipt_with_poi',
+    'expenses',
+    'from_messages',
+    'from_poi_to_this_person',
+    'to_messages',
+    'deferral_payments',
+    'restricted_stock_deferred',
+    'director_fees',
+    'loan_advances'
+]
+features_list = ['poi'] + sorted_features[0:9]
+features_list_without_poi = sorted_features[0:9]
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
@@ -28,20 +50,14 @@ with open("final_project_dataset.pkl", "r") as data_file:
 ### Task 2: Remove outliers
 # Remove the record of "TOTAL"
 del data_dict['TOTAL']
-
-# Remove top and bottom 2% or records
-outliers = outliers(data_dict, features_list_without_poi)
-
-for person in outliers:
-    del data_dict[person]
+del data_dict['LOCKHART EUGENE E']
+del data_dict['THE TRAVEL AGENCY IN THE PARK']
+del data_dict['SKILLING JEFFREY K']
+del data_dict['LAY KENNETH L']
 
 ### Task 3: Create new feature(s)
 for person in data_dict.keys():
     data_dict[person]['number_of_missing_fields'] = sum(1 for x in data_dict[person].values() if x == 'NaN')
-
-# adding the new feature to the list
-features_list.append('number_of_missing_fields')
-features_list_without_poi.append('number_of_missing_fields')
 
 # convert the fields we want into numbers
 for person in data_dict:
@@ -84,23 +100,33 @@ from sklearn.cross_validation import train_test_split
 features_train, features_test, labels_train, labels_test = \
     train_test_split(features, labels, test_size=0.3, random_state=42)
 
-# Tune the SVM
-parameters = {'kernel': ('linear', 'poly', 'rbf', 'sigmoid'), 'C': np.arange(1000, 100000, 1000)}
-svr = SVC()
-clf = model_selection.GridSearchCV(svr, parameters, scoring='precision', n_jobs=2, verbose=5)
-clf.fit(features_train, labels_train)
-print clf.best_params_
-print clf.best_score_
-
 # Build the clf
-svm_clf = SVC(kernel='rbf', C=21000)
-svm_clf.fit(features_train, labels_train)
-print svm_clf.score(features_test, labels_test)
-print precision_score(labels_test, svm_clf.predict(features_test), average='weighted')
+# svm_clf = SVC(kernel='poly', C=17000)
+# svm_clf.fit(features_train, labels_train)
+# print svm_clf.score(features_test, labels_test)
+# print precision_score(labels_test, svm_clf.predict(features_test), average='weighted')
+
+# tree_clf = tree.DecisionTreeClassifier(max_features=4, min_samples_split=30, criterion='gini', max_depth=2,
+#                                        splitter='random')
+# tree_clf.fit(features_train, labels_train)
+# print tree_clf.score(features_test, labels_test)
+# print precision_score(labels_test, tree_clf.predict(features_test), average='weighted')
+
+features_list = ['poi'] + sorted_features[0:3]
+features_list_without_poi = sorted_features[0:3]
+data = featureFormat(my_dataset, features_list, sort_keys=True)
+labels, features = targetFeatureSplit(data)
+features_train, features_test, labels_train, labels_test = \
+    train_test_split(features, labels, test_size=0.3, random_state=42)
+
+gaussian_clf = GaussianNB()
+gaussian_clf.fit(features_train, labels_train)
+print gaussian_clf.score(features_test, labels_test)
+print precision_score(labels_test, gaussian_clf.predict(features_test), average='weighted')
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
 ### that the version of poi_id.py that you submit can be run on its own and
 ### generates the necessary .pkl files for validating your results.
 
-dump_classifier_and_data(svm_clf, my_dataset, features_list)
+dump_classifier_and_data(gaussian_clf, my_dataset, features_list)
