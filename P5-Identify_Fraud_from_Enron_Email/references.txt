@@ -1,1 +1,15 @@
+Development Documentations and Online Forums
 https://stackoverflow.com/questions/23199796/detect-and-exclude-outliers-in-pandas-dataframe
+https://stackoverflow.com/questions/17455302/gridsearchcv-extremely-slow-on-small-dataset-in-scikit-learn
+
+Evaluation Metrics
+https://www.cs.cornell.edu/courses/cs578/2003fa/performance_measures.pdf
+
+Tree-based feature selection
+http://scikit-learn.org/stable/modules/feature_selection.html
+
+Precision Score
+http://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html
+
+Optimizing for speed
+http://scikit-learn.org/stable/developers/performance.html
