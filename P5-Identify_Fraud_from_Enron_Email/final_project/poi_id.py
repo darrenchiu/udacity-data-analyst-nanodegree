@@ -40,8 +40,8 @@ sorted_features = [
     'director_fees',
     'loan_advances'
 ]
-features_list = ['poi'] + sorted_features[0:9]
-features_list_without_poi = sorted_features[0:9]
+features_list = ['poi'] + sorted_features[0:3]
+features_list_without_poi = sorted_features[0:3]
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
@@ -101,24 +101,6 @@ features_train, features_test, labels_train, labels_test = \
     train_test_split(features, labels, test_size=0.3, random_state=42)
 
 # Build the clf
-# svm_clf = SVC(kernel='poly', C=17000)
-# svm_clf.fit(features_train, labels_train)
-# print svm_clf.score(features_test, labels_test)
-# print precision_score(labels_test, svm_clf.predict(features_test), average='weighted')
-
-# tree_clf = tree.DecisionTreeClassifier(max_features=4, min_samples_split=30, criterion='gini', max_depth=2,
-#                                        splitter='random')
-# tree_clf.fit(features_train, labels_train)
-# print tree_clf.score(features_test, labels_test)
-# print precision_score(labels_test, tree_clf.predict(features_test), average='weighted')
-
-features_list = ['poi'] + sorted_features[0:3]
-features_list_without_poi = sorted_features[0:3]
-data = featureFormat(my_dataset, features_list, sort_keys=True)
-labels, features = targetFeatureSplit(data)
-features_train, features_test, labels_train, labels_test = \
-    train_test_split(features, labels, test_size=0.3, random_state=42)
-
 gaussian_clf = GaussianNB()
 gaussian_clf.fit(features_train, labels_train)
 print gaussian_clf.score(features_test, labels_test)

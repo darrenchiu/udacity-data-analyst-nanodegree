@@ -8,8 +8,13 @@ https://www.cs.cornell.edu/courses/cs578/2003fa/performance_measures.pdf
 Tree-based feature selection
 http://scikit-learn.org/stable/modules/feature_selection.html
 
-Precision Score
+Precision/Recall Score
 http://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html
+http://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html
 
 Optimizing for speed
 http://scikit-learn.org/stable/developers/performance.html
+
+StratifiedShuffleSplit Cross Validation
+http://answers.dataiku.com/980/stratified-shufflesplit-cross-validation
+http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedShuffleSplit.html
