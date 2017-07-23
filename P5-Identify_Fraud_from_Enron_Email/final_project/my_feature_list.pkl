@@ -1,9 +1,9 @@
 (lp0
 S'poi'
 p1
-aS'total_stock_value'
-p2
 aS'exercised_stock_options'
+p2
+aS'expenses'
 p3
 aS'deferred_income'
 p4
